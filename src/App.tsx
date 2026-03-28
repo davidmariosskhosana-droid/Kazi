@@ -4345,7 +4345,13 @@ const CourseModal: React.FC<{ course: string; onClose: () => void }> = ({ course
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          setContent('A funcionalidade de IA está desativada. Por favor, configura a GEMINI_API_KEY.');
+          setLoading(false);
+          return;
+        }
+        const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
           contents: `Cria um guia prático, profissional e motivador em português de Moçambique sobre: "${course}". 
