@@ -17,6 +17,7 @@ import {
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
+  signInWithCredential,
   GoogleAuthProvider, 
   signOut,
   User as FirebaseUser
@@ -656,6 +657,7 @@ interface AuthContextType {
   signIn: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: (uid: string) => Promise<void>;
+  isWebView: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -713,6 +715,34 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isWebView, setIsWebView] = useState(false);
+
+  useEffect(() => {
+    // Detect if running inside a WebView (React Native)
+    if ((window as any).ReactNativeWebView) {
+      setIsWebView(true);
+    }
+
+    // Listen for native authentication event
+    const handleNativeAuth = async (event: any) => {
+      const idToken = event.detail?.idToken;
+      if (idToken) {
+        setLoading(true);
+        try {
+          const credential = GoogleAuthProvider.credential(idToken);
+          await signInWithCredential(auth, credential);
+          // onAuthStateChanged will handle the rest
+        } catch (error) {
+          console.error('Native auth error:', error);
+          toast.error('Erro na autenticação nativa.');
+          setLoading(false);
+        }
+      }
+    };
+
+    window.addEventListener('kaziAuthReady' as any, handleNativeAuth);
+    return () => window.removeEventListener('kaziAuthReady' as any, handleNativeAuth);
+  }, []);
 
   const refreshProfile = async (uid: string) => {
     try {
@@ -870,7 +900,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, logout, refreshProfile, isWebView }}>
       {children}
     </AuthContext.Provider>
   );
@@ -1483,7 +1513,7 @@ const LoadingScreen = () => (
 );
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { profile, logout, signIn, loading } = useAuth();
+  const { profile, logout, signIn, loading, isWebView } = useAuth();
   const { toggleTheme } = useTheme();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -1648,9 +1678,11 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </button>
                   </div>
                 ) : (
-                  <button onClick={signIn} className="bg-primary text-white px-8 py-2.5 rounded-full text-sm font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0">
-                    Entrar
-                  </button>
+                  !isWebView && (
+                    <button onClick={signIn} className="bg-primary text-white px-8 py-2.5 rounded-full text-sm font-bold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 hover:-translate-y-0.5 active:translate-y-0">
+                      Entrar
+                    </button>
+                  )
                 )}
               </div>
             </div>
@@ -1712,7 +1744,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <button onClick={() => setShowLogoutConfirm(true)} className="block text-lg font-bold text-red-600">Sair</button>
                   </>
                 ) : (
-                  <button onClick={() => { signIn(); setIsMenuOpen(false); }} className="w-full bg-primary text-white py-4 rounded-2xl font-bold">Entrar</button>
+                  !isWebView && (
+                    <button onClick={() => { signIn(); setIsMenuOpen(false); }} className="w-full bg-primary text-white py-4 rounded-2xl font-bold">Entrar</button>
+                  )
                 )}
               </div>
             </motion.div>
@@ -2374,7 +2408,7 @@ const ServiceList = () => {
 };
 
 const LoginPrompt = ({ message = "Precisa entrar para continuar" }: { message?: string }) => {
-  const { signIn } = useAuth();
+  const { signIn, isWebView } = useAuth();
   return (
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <motion.div 
@@ -2385,14 +2419,18 @@ const LoginPrompt = ({ message = "Precisa entrar para continuar" }: { message?: 
         <Logo className="mb-8 scale-150" />
         <h2 className="text-3xl font-black tracking-tighter text-brand-ink mb-4">{message}</h2>
         <p className="text-brand-ink/40 font-medium mb-10 leading-relaxed">
-          Inicie sessão para aceder a todas as funcionalidades do KAZI, incluindo pedidos, mensagens e o seu perfil.
+          {isWebView 
+            ? "Por favor, utilize o botão de login do aplicativo para aceder à sua conta KAZI."
+            : "Inicie sessão para aceder a todas as funcionalidades do KAZI, incluindo pedidos, mensagens e o seu perfil."}
         </p>
-        <button 
-          onClick={signIn}
-          className="w-full py-5 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 hover:-translate-y-1 active:translate-y-0"
-        >
-          Entrar com Google
-        </button>
+        {!isWebView && (
+          <button 
+            onClick={signIn}
+            className="w-full py-5 bg-primary text-white rounded-2xl font-black text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 hover:-translate-y-1 active:translate-y-0"
+          >
+            Entrar com Google
+          </button>
+        )}
       </motion.div>
     </div>
   );
@@ -2404,11 +2442,17 @@ const ServiceDetail = () => {
   const [author, setAuthor] = useState<UserProfile | null>(null);
   const [orderMessage, setOrderMessage] = useState('');
   const [isOrdering, setIsOrdering] = useState(false);
-  const { profile, signIn } = useAuth();
+  const { profile, signIn, isWebView } = useAuth();
   const navigate = useNavigate();
 
   const handleStartChat = async () => {
-    if (!profile) return signIn();
+    if (!profile) {
+      if (isWebView) {
+        toast.info("Por favor, faça login através do aplicativo.");
+        return;
+      }
+      return signIn();
+    }
     if (!service) return;
     if (profile.uid === service.authorId) return;
 
@@ -2466,7 +2510,13 @@ const ServiceDetail = () => {
   }, [id]);
 
   const handleOrder = async () => {
-    if (!profile) return signIn();
+    if (!profile) {
+      if (isWebView) {
+        toast.info("Por favor, faça login através do aplicativo.");
+        return;
+      }
+      return signIn();
+    }
     if (!service) return;
 
     setIsOrdering(true);
@@ -2556,15 +2606,19 @@ const ServiceDetail = () => {
                 <div>
                   <h4 className="text-lg font-black tracking-tight mb-2">Login necessário</h4>
                   <p className="text-xs text-brand-ink/40 font-medium leading-relaxed">
-                    Inicie sessão para fazer pedidos, enviar mensagens e ver detalhes de contacto.
+                    {isWebView 
+                      ? "Por favor, faça login através do aplicativo para contactar este profissional."
+                      : "Inicie sessão para fazer pedidos, enviar mensagens e ver detalhes de contacto."}
                   </p>
                 </div>
-                <button 
-                  onClick={signIn}
-                  className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
-                >
-                  Entrar para pedir/contatar
-                </button>
+                {!isWebView && (
+                  <button 
+                    onClick={signIn}
+                    className="w-full py-4 bg-primary text-white rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  >
+                    Entrar para pedir/contatar
+                  </button>
+                )}
               </div>
             ) : (
               <>
@@ -3644,7 +3698,7 @@ const ChatWindow: React.FC = () => {
 
 const Profile = () => {
   const { id: paramId } = useParams();
-  const { profile: currentUserProfile, refreshProfile, signIn } = useAuth();
+  const { profile: currentUserProfile, refreshProfile, signIn, isWebView } = useAuth();
   const navigate = useNavigate();
   const id = paramId || currentUserProfile?.uid;
   const isOwnProfile = currentUserProfile?.uid === id;
@@ -3662,7 +3716,13 @@ const Profile = () => {
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const toggleFollow = async () => {
-    if (!currentUserProfile || !profile || isFollowLoading) return signIn();
+    if (!currentUserProfile || !profile || isFollowLoading) {
+      if (!currentUserProfile && isWebView) {
+        toast.info("Por favor, faça login através do aplicativo.");
+        return;
+      }
+      return signIn();
+    }
     if (isOwnProfile) return;
 
     setIsFollowLoading(true);
@@ -3752,7 +3812,13 @@ const Profile = () => {
   }, [currentUserProfile, id, isOwnProfile]);
 
   const handleStartChat = async () => {
-    if (!currentUserProfile) return signIn();
+    if (!currentUserProfile) {
+      if (isWebView) {
+        toast.info("Por favor, faça login através do aplicativo.");
+        return;
+      }
+      return signIn();
+    }
     if (currentUserProfile.uid === id) return;
 
     const chatId = [currentUserProfile.uid, id].sort().join('_');
@@ -3827,7 +3893,13 @@ const Profile = () => {
   }, [id]);
 
   const handleBlockUser = async (targetId: string, isBlocked: boolean) => {
-    if (!currentUserProfile) return signIn();
+    if (!currentUserProfile) {
+      if (isWebView) {
+        toast.info("Por favor, faça login através do aplicativo.");
+        return;
+      }
+      return signIn();
+    }
     try {
       const newBlockedUsers = isBlocked
         ? (currentUserProfile.blockedUsers || []).filter(uid => uid !== targetId)
@@ -4083,15 +4155,19 @@ const Profile = () => {
                     <div className="p-6 bg-white rounded-2xl border border-dashed border-brand-gray text-center space-y-3">
                       <Lock className="w-6 h-6 text-brand-ink/20 mx-auto" />
                       <p className="text-[10px] text-brand-ink/40 font-black uppercase tracking-widest leading-tight">
-                        Login necessário para ver<br />informações de contacto
+                        {isWebView 
+                          ? "Faça login no aplicativo para ver contacto"
+                          : "Login necessário para ver informações de contacto"}
                       </p>
-                      <button 
-                        onClick={signIn}
-                        className="w-full py-3 bg-white border border-brand-gray rounded-xl flex items-center justify-center gap-2 hover:bg-brand-bg transition-all shadow-sm"
-                      >
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Entrar com Google</span>
-                      </button>
+                      {!isWebView && (
+                        <button 
+                          onClick={signIn}
+                          className="w-full py-3 bg-white border border-brand-gray rounded-xl flex items-center justify-center gap-2 hover:bg-brand-bg transition-all shadow-sm"
+                        >
+                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Entrar com Google</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <>
@@ -6003,7 +6079,7 @@ const ConfirmModal: React.FC<{
 
 const JobDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { profile } = useAuth();
+  const { profile, isWebView } = useAuth();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
@@ -6029,6 +6105,10 @@ const JobDetails: React.FC = () => {
 
   const contactRecruiter = async () => {
     if (!profile) {
+      if (isWebView) {
+        toast.info("Por favor, faça login através do aplicativo.");
+        return;
+      }
       toast.error('Faz login para contactar o recrutador.');
       return;
     }
