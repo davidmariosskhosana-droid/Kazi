@@ -101,6 +101,7 @@ import {
   FileText,
   Image as ImageIcon,
   Pause,
+  Zap,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -116,6 +117,190 @@ import { generateLogo, getSmartRecommendations, validateAndImproveProfile, valid
 import { ImageUpload } from './components/ImageUpload';
 
 // --- Constants ---
+const QUICK_COURSES_LIBRARY = [
+  {
+    id: 'cv-sucesso',
+    title: 'Como Fazer um CV de Sucesso',
+    category: 'Carreira',
+    content: `
+# 🚀 Como Fazer um CV de Sucesso em Moçambique
+
+Um bom currículo é a tua porta de entrada para o mercado de trabalho. Aqui estão os passos essenciais:
+
+## 💡 Dicas de Ouro
+1. **Simplicidade é Chave**: Usa um design limpo e profissional. Evita cores berrantes.
+2. **Foco no Contacto**: Garante que o teu número de telemóvel e email estão corretos e visíveis no topo.
+3. **Experiência Relevante**: Lista as tuas experiências da mais recente para a mais antiga.
+
+## 🛠️ Estrutura Recomendada
+- **Dados Pessoais**: Nome completo, contacto, localização (Província/Distrito).
+- **Perfil Profissional**: 2 a 3 frases resumindo quem és e o que procuras.
+- **Experiência**: Nome da empresa, cargo e principais responsabilidades.
+- **Educação**: Nível académico e instituições.
+- **Habilidades**: Línguas, informática e competências técnicas.
+
+*Dica KAZI: Mantém o teu CV com no máximo 2 páginas!*
+    `
+  },
+  {
+    id: 'dicas-negocio',
+    title: 'Dicas de Negócio para Jovens',
+    category: 'Empreendedorismo',
+    content: `
+# 💡 Dicas de Negócio para Jovens Empreendedores
+
+Começar um negócio em Moçambique exige coragem e estratégia. Segue estes conselhos:
+
+## 🚀 Começa Pequeno, Pensa Grande
+Não esperes ter milhões para começar. Usa o que tens agora. Se sabes cozinhar, começa a vender para os vizinhos. Se sabes consertar telemóveis, oferece o serviço na tua zona.
+
+## 🤝 O Poder do Networking
+Em Moçambique, "quem conhece quem" importa muito. Participa em eventos, fala com outros empreendedores e usa a KAZI para encontrar parceiros.
+
+## 📊 Gestão de Dinheiro
+Nunca mistures o dinheiro do negócio com o dinheiro pessoal. Paga-te um pequeno salário e reinveste o resto no negócio para ele crescer.
+
+*Dica KAZI: O segredo do sucesso é a consistência. Não desistas no primeiro obstáculo!*
+    `
+  },
+  {
+    id: 'atendimento-cliente',
+    title: 'Excelência no Atendimento ao Cliente',
+    category: 'Profissionalismo',
+    content: `
+# 🌟 Excelência no Atendimento ao Cliente
+
+Em qualquer serviço, o cliente é o rei. Como garantir que ele volte?
+
+## 😊 A Primeira Impressão
+Sê sempre cordial e sorridente. Um "Bom dia" ou "Boa tarde" com energia muda tudo.
+
+## 👂 Ouve Mais, Fala Menos
+Entende exatamente o que o cliente precisa antes de oferecer uma solução. A escuta ativa evita erros e reclamações.
+
+## ✅ Cumpre o Prometido
+Se disseste que o trabalho estaria pronto às 14h, entrega às 14h. A pontualidade é a base da confiança em Moçambique.
+
+*Dica KAZI: Um cliente satisfeito traz outros dez. Um insatisfeito afasta cem!*
+    `
+  },
+  {
+    id: 'marketing-digital',
+    title: 'Marketing Digital para Freelancers',
+    category: 'Marketing',
+    content: `
+# 📱 Marketing Digital para Freelancers
+
+Como usar a internet para ganhar mais clientes?
+
+## 📸 Fotos de Qualidade
+Na KAZI e nas redes sociais, as pessoas compram com os olhos. Tira fotos claras e bonitas dos teus trabalhos anteriores.
+
+## ✍️ Escreve Bem
+Evita erros de português e gírias excessivas. Uma escrita clara transmite profissionalismo.
+
+## 💬 Resposta Rápida
+O cliente que recebe uma resposta rápida sente-se valorizado. Tenta responder às mensagens na KAZI em menos de 1 hora.
+
+*Dica KAZI: Usa o teu status do WhatsApp para mostrar o que estás a fazer hoje!*
+    `
+  },
+  {
+    id: 'gestao-tempo',
+    title: 'Gestão de Tempo para Freelancers',
+    category: 'Produtividade',
+    content: `
+# ⏰ Gestão de Tempo para Freelancers
+
+Tempo é dinheiro! Como organizar o teu dia para produzir mais?
+
+## 📅 Planeamento Diário
+Faz uma lista de tarefas na noite anterior. Prioriza o que é mais importante e urgente.
+
+## 🚫 Evita Distrações
+Desliga as notificações das redes sociais enquanto trabalhas. Foca-te 100% na tarefa atual.
+
+## ⚖️ Equilíbrio
+Define horários para trabalhar e horários para descansar. O descanso é fundamental para a criatividade.
+
+*Dica KAZI: Usa a técnica Pomodoro: 25 minutos de foco total e 5 minutos de pausa!*
+    `
+  },
+  {
+    id: 'como-cobrar',
+    title: 'Como Cobrar pelos teus Serviços',
+    category: 'Finanças',
+    content: `
+# 💰 Como Cobrar pelos teus Serviços
+
+Muitos freelancers têm dificuldade em definir preços. Segue este guia:
+
+## 🔍 Pesquisa de Mercado
+Vê quanto outros profissionais da tua área e região estão a cobrar. Não sejas o mais barato nem o mais caro sem motivo.
+
+## 🛠️ Considera os Custos
+Soma todos os teus gastos: materiais, transporte, internet e o teu tempo. O preço deve cobrir tudo isso e ainda dar lucro.
+
+## 💎 Valor vs Preço
+Mostra ao cliente o valor do teu trabalho. Um serviço bem feito economiza dinheiro e tempo para o cliente no futuro.
+
+*Dica KAZI: Nunca trabalhes de graça "pela exposição". O teu talento tem valor!*
+    `
+  }
+];
+
+const getRecommendedCourses = (profile: UserProfile | null) => {
+  if (!profile) return QUICK_COURSES_LIBRARY.slice(0, 3);
+
+  const recommendations: typeof QUICK_COURSES_LIBRARY = [];
+  const bio = (profile.bio || '').toLowerCase();
+  const lookingFor = (profile.lookingFor || '').toLowerCase();
+  const role = profile.role;
+
+  // Logic based on keywords
+  if (bio.includes('negócio') || bio.includes('venda') || lookingFor.includes('investimento')) {
+    const course = QUICK_COURSES_LIBRARY.find(c => c.id === 'dicas-negocio');
+    if (course) recommendations.push(course);
+  }
+
+  if (bio.includes('marketing') || bio.includes('social') || bio.includes('divulgar')) {
+    const course = QUICK_COURSES_LIBRARY.find(c => c.id === 'marketing-digital');
+    if (course) recommendations.push(course);
+  }
+
+  if (bio.includes('dinheiro') || bio.includes('preço') || bio.includes('cobrar') || bio.includes('finanças')) {
+    const course = QUICK_COURSES_LIBRARY.find(c => c.id === 'como-cobrar');
+    if (course) recommendations.push(course);
+  }
+
+  if (bio.includes('organizar') || bio.includes('tempo') || bio.includes('produtividade')) {
+    const course = QUICK_COURSES_LIBRARY.find(c => c.id === 'gestao-tempo');
+    if (course) recommendations.push(course);
+  }
+
+  // Role based defaults
+  if (role === 'provider') {
+    const cvCourse = QUICK_COURSES_LIBRARY.find(c => c.id === 'cv-sucesso');
+    const serviceCourse = QUICK_COURSES_LIBRARY.find(c => c.id === 'atendimento-cliente');
+    if (cvCourse && !recommendations.find(r => r.id === cvCourse.id)) recommendations.push(cvCourse);
+    if (serviceCourse && !recommendations.find(r => r.id === serviceCourse.id)) recommendations.push(serviceCourse);
+  } else {
+    const bizCourse = QUICK_COURSES_LIBRARY.find(c => c.id === 'dicas-negocio');
+    const serviceCourse = QUICK_COURSES_LIBRARY.find(c => c.id === 'atendimento-cliente');
+    if (bizCourse && !recommendations.find(r => r.id === bizCourse.id)) recommendations.push(bizCourse);
+    if (serviceCourse && !recommendations.find(r => r.id === serviceCourse.id)) recommendations.push(serviceCourse);
+  }
+
+  // Fill with defaults if not enough
+  QUICK_COURSES_LIBRARY.forEach(course => {
+    if (recommendations.length < 4 && !recommendations.find(r => r.id === course.id)) {
+      recommendations.push(course);
+    }
+  });
+
+  return recommendations.slice(0, 4);
+};
+
 const MOZAMBIQUE_LOCATIONS: Record<string, string[]> = {
   "Cabo Delgado": ["Pemba", "Ancuabe", "Balama", "Chiúre", "Ibo", "Macomia", "Mecúfi", "Meluco", "Metuge", "Mocímboa da Praia", "Montepuez", "Mueda", "Muidumbe", "Namuno", "Nangade", "Palma", "Quissanga"],
   "Gaza": ["Xai-Xai", "Bilene", "Chibuto", "Chicualacuala", "Chigubo", "Chókwe", "Guijá", "Mabalane", "Manjacaze", "Massangena", "Massingir"],
@@ -264,7 +449,7 @@ const CreateJob: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
               >
                 <option value="">Selecionar Distrito</option>
-                {formData.province && MOZAMBIQUE_LOCATIONS[formData.province].map(d => (
+                {(formData.province && MOZAMBIQUE_LOCATIONS[formData.province] || []).map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -698,14 +883,23 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
   const [showTerms, setShowTerms] = useState(false);
   const [formData, setFormData] = useState({
     displayName: profile?.displayName || '',
-    handle: '',
-    age: 18,
-    bio: '',
-    role: 'provider' as 'provider' | 'client',
-    phoneNumber: '',
+    handle: profile?.handle || '',
+    age: profile?.age || 18,
+    bio: profile?.bio || '',
+    role: profile?.role || 'provider' as 'provider' | 'client',
+    phoneNumber: profile?.phoneNumber || '',
     photoURL: profile?.photoURL || '',
-    lookingFor: '',
-    location: { province: '', district: '' },
+    lookingFor: profile?.lookingFor || '',
+    location: { 
+      province: profile?.location?.province || '', 
+      district: profile?.location?.district || '' 
+    },
+    socialLinks: {
+      instagram: profile?.socialLinks?.instagram || '',
+      facebook: profile?.socialLinks?.facebook || '',
+      whatsapp: profile?.socialLinks?.whatsapp || '',
+      twitter: profile?.socialLinks?.twitter || '',
+    },
     acceptedTerms: false
   });
 
@@ -869,12 +1063,22 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                 className="w-32 h-32 rounded-[32px]"
               />
               <div className="flex flex-col items-center mt-4 space-y-2">
-                <p className="text-xs font-bold text-brand-ink/40 uppercase tracking-widest">Foto de Perfil Real</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-brand-ink/40 uppercase tracking-widest">Foto de Perfil Real</p>
+                  {profile?.photoURL && (
+                    <span className="text-[8px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded-full">Sugerida</span>
+                  )}
+                </div>
                 <p className="text-[10px] text-brand-ink/30 font-medium text-center max-w-[200px]">Usa uma foto clara do teu rosto para transmitir confiança aos clientes.</p>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40 mb-2">Nome Completo</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40">Nome Completo</label>
+                {profile?.displayName && (
+                  <span className="text-[10px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded-full">Sugerido</span>
+                )}
+              </div>
               <input 
                 type="text" 
                 value={formData.displayName}
@@ -883,7 +1087,12 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40 mb-2">Nome de Utilizador (Handle)</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40">Nome de Utilizador (Handle)</label>
+                {profile?.handle && (
+                  <span className="text-[10px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded-full">Sugerido</span>
+                )}
+              </div>
               <input 
                 type="text" 
                 value={formData.handle}
@@ -899,7 +1108,12 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40 mb-2">Idade</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40">Idade</label>
+                  {profile?.age && (
+                    <span className="text-[10px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded-full">Sugerida</span>
+                  )}
+                </div>
                 <input 
                   type="number" 
                   value={formData.age}
@@ -908,7 +1122,12 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40 mb-2">Telemóvel</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40">Telemóvel</label>
+                  {profile?.phoneNumber && (
+                    <span className="text-[10px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded-full">Sugerido</span>
+                  )}
+                </div>
                 <input 
                   type="tel" 
                   placeholder="+258..."
@@ -963,7 +1182,7 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                     ...formData, 
                     location: { 
                       province: e.target.value, 
-                      district: MOZAMBIQUE_LOCATIONS[e.target.value][0] 
+                      district: MOZAMBIQUE_LOCATIONS[e.target.value] ? MOZAMBIQUE_LOCATIONS[e.target.value][0] : ''
                     }
                   })}
                   className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-brand-ink"
@@ -983,7 +1202,8 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                   })}
                   className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-brand-ink"
                 >
-                  {MOZAMBIQUE_LOCATIONS[formData.location.province].map(d => (
+                  <option value="">Selecionar Distrito</option>
+                  {(MOZAMBIQUE_LOCATIONS[formData.location.province] || []).map(d => (
                     <option key={d} value={d}>{d}</option>
                   ))}
                 </select>
@@ -1009,10 +1229,77 @@ const Onboarding: React.FC<{ onSkip?: () => void }> = ({ onSkip }) => {
                 value={formData.lookingFor}
                 onChange={e => setFormData({...formData, lookingFor: e.target.value})}
                 placeholder="Ex: Procuro serviços de design gráfico ou aulas de matemática..."
-                className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all h-40 resize-none font-medium text-brand-ink"
+                className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all h-32 resize-none font-medium text-brand-ink"
               />
               <p className="text-[10px] font-bold text-brand-ink/40 mt-2 uppercase tracking-widest">Isto ajudará o nosso algoritmo inteligente a recomendar-te os melhores serviços.</p>
             </div>
+
+            <div className="space-y-4">
+              <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40">Redes Sociais (Opcional)</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Instagram className="w-4 h-4 text-pink-500" />
+                    {profile?.socialLinks?.instagram && (
+                      <span className="text-[8px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-1.5 py-0.5 rounded-full">Sugerido</span>
+                    )}
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="Instagram"
+                    value={formData.socialLinks.instagram}
+                    onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, instagram: e.target.value}})}
+                    className="w-full p-4 pl-32 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-brand-ink text-sm"
+                  />
+                </div>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Facebook className="w-4 h-4 text-blue-600" />
+                    {profile?.socialLinks?.facebook && (
+                      <span className="text-[8px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-1.5 py-0.5 rounded-full">Sugerido</span>
+                    )}
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="Facebook"
+                    value={formData.socialLinks.facebook}
+                    onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, facebook: e.target.value}})}
+                    className="w-full p-4 pl-32 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-brand-ink text-sm"
+                  />
+                </div>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-green-500" />
+                    {profile?.socialLinks?.whatsapp && (
+                      <span className="text-[8px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-1.5 py-0.5 rounded-full">Sugerido</span>
+                    )}
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="WhatsApp"
+                    value={formData.socialLinks.whatsapp}
+                    onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, whatsapp: e.target.value}})}
+                    className="w-full p-4 pl-32 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-brand-ink text-sm"
+                  />
+                </div>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Twitter className="w-4 h-4 text-blue-400" />
+                    {profile?.socialLinks?.twitter && (
+                      <span className="text-[8px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-1.5 py-0.5 rounded-full">Sugerido</span>
+                    )}
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="Twitter"
+                    value={formData.socialLinks.twitter}
+                    onChange={e => setFormData({...formData, socialLinks: {...formData.socialLinks, twitter: e.target.value}})}
+                    className="w-full p-4 pl-32 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-brand-ink text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="bg-secondary/10 p-6 rounded-3xl border border-secondary/20 mb-6">
               <div className="flex items-start space-x-4">
                 <CheckCircle className="w-6 h-6 text-secondary mt-1" />
@@ -1659,32 +1946,35 @@ const Home = () => {
       {/* Quick Courses Section */}
       <section>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black tracking-tight text-brand-ink">Cursos Rápidos</h2>
+          <h2 className="text-xl font-black tracking-tight text-brand-ink">Cursos Rápidos Recomendados</h2>
           <ChevronRight className="w-6 h-6 text-brand-ink/20" />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <button 
-            onClick={() => setSelectedCourse('Como Fazer um CV de Sucesso')}
-            className="bg-white p-4 rounded-[24px] border border-brand-gray/50 shadow-sm flex items-center gap-3 text-left group hover:border-primary/30 transition-all active:scale-95"
-          >
-            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-brand-ink leading-tight">Como Fazer<br />CV</p>
-            </div>
-          </button>
-          <button 
-            onClick={() => setSelectedCourse('Dicas de Negócio para Jovens')}
-            className="bg-white p-4 rounded-[24px] border border-brand-gray/50 shadow-sm flex items-center gap-3 text-left group hover:border-primary/30 transition-all active:scale-95"
-          >
-            <div className="w-12 h-12 bg-brand-accent/10 rounded-xl flex items-center justify-center text-brand-accent group-hover:scale-110 transition-transform">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-brand-ink leading-tight">Dicas de<br />Negócio</p>
-            </div>
-          </button>
+          {getRecommendedCourses(profile).map((course) => (
+            <button 
+              key={course.id}
+              onClick={() => setSelectedCourse(course.id)}
+              className="bg-white p-4 rounded-[24px] border border-brand-gray/50 shadow-sm flex items-center gap-3 text-left group hover:border-primary/30 transition-all active:scale-95"
+            >
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${
+                course.category === 'Carreira' ? 'bg-blue-50 text-blue-600' :
+                course.category === 'Empreendedorismo' ? 'bg-brand-accent/10 text-brand-accent' :
+                course.category === 'Profissionalismo' ? 'bg-green-50 text-green-600' :
+                'bg-purple-50 text-purple-600'
+              }`}>
+                {course.category === 'Carreira' ? <BookOpen className="w-6 h-6" /> :
+                 course.category === 'Empreendedorismo' ? <Sparkles className="w-6 h-6" /> :
+                 course.category === 'Profissionalismo' ? <CheckCircle className="w-6 h-6" /> :
+                 <Zap className="w-6 h-6" />}
+              </div>
+              <div>
+                <p className="text-xs font-black text-brand-ink leading-tight">
+                  {course.title.split(' ').slice(0, 2).join(' ')}<br />
+                  {course.title.split(' ').slice(2).join(' ')}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
       </section>
 
@@ -1965,7 +2255,7 @@ const ServiceList = () => {
                     className="w-full p-3 bg-brand-bg rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm font-bold"
                   >
                     <option value="">Todos os Distritos</option>
-                    {MOZAMBIQUE_LOCATIONS[selectedProvince].map(d => (
+                    {(MOZAMBIQUE_LOCATIONS[selectedProvince] || []).map(d => (
                       <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
@@ -4182,11 +4472,11 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
                 value={formData.location.province}
                 onChange={e => setFormData({
                   ...formData, 
-                  location: { 
-                    province: e.target.value, 
-                    district: MOZAMBIQUE_LOCATIONS[e.target.value][0] 
-                  }
-                })}
+                    location: { 
+                      province: e.target.value, 
+                      district: MOZAMBIQUE_LOCATIONS[e.target.value] ? MOZAMBIQUE_LOCATIONS[e.target.value][0] : ''
+                    }
+                  })}
                 className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
               >
                 {Object.keys(MOZAMBIQUE_LOCATIONS).map(p => (
@@ -4204,7 +4494,8 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
                 })}
                 className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
               >
-                {MOZAMBIQUE_LOCATIONS[formData.location.province].map(d => (
+                <option value="">Selecionar Distrito</option>
+                {(MOZAMBIQUE_LOCATIONS[formData.location.province] || []).map(d => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -4303,7 +4594,7 @@ const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
           <div>
             <label className="block text-xs font-bold uppercase tracking-widest text-brand-ink/40 mb-4">Exemplos de Trabalho (Portfólio)</label>
             <div className="grid grid-cols-3 gap-4">
-              {formData.workExamples.map((img, idx) => (
+              {(formData.workExamples || []).map((img, idx) => (
                 <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-brand-gray">
                   <img src={img} className="w-full h-full object-cover" />
                   <button 
@@ -4344,10 +4635,18 @@ const CourseModal: React.FC<{ course: string; onClose: () => void }> = ({ course
 
   useEffect(() => {
     const fetchCourse = async () => {
+      // Check local library first
+      const localCourse = QUICK_COURSES_LIBRARY.find(c => c.title === course || c.id === course);
+      if (localCourse) {
+        setContent(localCourse.content);
+        setLoading(false);
+        return;
+      }
+
       try {
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-          setContent('A funcionalidade de IA está desativada. Por favor, configura a GEMINI_API_KEY.');
+          setContent('Este curso não está disponível offline. Por favor, liga o Gemini ou escolhe um curso da biblioteca local.');
           setLoading(false);
           return;
         }
@@ -4553,7 +4852,7 @@ const AddServiceModal = ({ onClose, isStandalone = false }: { onClose: () => voi
                 ...formData, 
                 location: { 
                   province: e.target.value, 
-                  district: MOZAMBIQUE_LOCATIONS[e.target.value][0] 
+                  district: MOZAMBIQUE_LOCATIONS[e.target.value] ? MOZAMBIQUE_LOCATIONS[e.target.value][0] : ''
                 }
               })}
               className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
@@ -4573,7 +4872,8 @@ const AddServiceModal = ({ onClose, isStandalone = false }: { onClose: () => voi
               })}
               className="w-full p-4 bg-brand-bg rounded-2xl outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold"
             >
-              {MOZAMBIQUE_LOCATIONS[formData.location.province].map(d => (
+              <option value="">Selecionar Distrito</option>
+              {(MOZAMBIQUE_LOCATIONS[formData.location.province] || []).map(d => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
